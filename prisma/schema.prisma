@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Primary database schema - Tenant registry and platform metadata
+// This schema is owned by the API Gateway (vritti-api-nexus)
 
 generator client {
   provider = "prisma-client-js"
@@ -7,69 +7,46 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url       = env("PRISMA_CLI_DATABASE_URL")
+  directUrl = env("PRISMA_CLI_DIRECT_URL")
 }
 
-enum UserStatus {
-  ACTIVE
-  INACTIVE
-  SUSPENDED
-  DELETED
-}
+/// Tenant registry - stores configuration for all tenants
+model Tenant {
+  id          String       @id @default(uuid())
+  subdomain   String       @unique /// Subdomain for tenant access (e.g., 'acme' for acme.yourdomain.com)
+  name        String       /// Display name
+  description String?      /// Optional description of the tenant
 
-enum AttemptStatus {
-  IN_PROGRESS
-  COMPLETED
-  EXPIRED
-  ABANDONED
-}
+  dbType   DatabaseType @default(SHARED) @map("db_type")
+  status   TenantStatus @default(ACTIVE)
 
-model User {
-  id            String         @id @default(uuid())
-  email         String         @unique
-  firstName     String         @map("first_name")
-  lastName      String         @map("last_name")
-  passwordHash  String         @map("password_hash")
-  emailVerified Boolean        @default(false) @map("email_verified")
-  status        UserStatus     @default(ACTIVE)
-  refreshTokens RefreshToken[]
-  createdAt     DateTime       @default(now()) @map("created_at")
-  updatedAt     DateTime       @updatedAt @map("updated_at")
+  // Database connection details
+  // For SHARED: Only dbSchema is typically used (schema within shared database)
+  // For DEDICATED: All fields are used for dedicated database connection
+  dbHost             String? @map("db_host") /// Database host
+  dbPort             Int?    @map("db_port") /// Database port (default: 5432)
+  dbUsername         String? @map("db_username") /// Database username (encrypted)
+  dbPassword         String? @map("db_password") /// Database password (encrypted)
+  dbName             String? @map("db_name") /// Database name
+  dbSchema           String? @map("db_schema") /// PostgreSQL schema name
+  dbSslMode          String? @default("require") @map("db_ssl_mode") /// SSL mode: require, prefer, disable
+  connectionPoolSize Int?    @default(10) @map("connection_pool_size") /// Connection pool size
 
-  @@map("users")
-}
-
-model RefreshToken {
-  id        String   @id @default(uuid())
-  token     String   @unique
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  revoked   Boolean  @default(false)
-  expiresAt DateTime @map("expires_at")
+  // Metadata
   createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("refresh_tokens")
+  @@map("tenants")
 }
 
-model SignupAttempt {
-  id             String        @id @default(uuid())
-  email          String
-  firstName      String?       @map("first_name")
-  lastName       String?       @map("last_name")
-  passwordHash   String?       @map("password_hash")
-  emailVerified  Boolean       @default(false) @map("email_verified")
-  phoneVerified  Boolean       @default(false) @map("phone_verified")
-  mfaEnabled     Boolean       @default(false) @map("mfa_enabled")
-  currentStep    String        @default("signup")
-  completedSteps String[]      @default([])
-  status         AttemptStatus @default(IN_PROGRESS)
-  attemptCount   Int           @default(1) @map("attempt_count")
-  createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
-  expiresAt      DateTime      @map("expires_at")
-  completedAt    DateTime?     @map("completed_at")
+enum DatabaseType {
+  SHARED    /// Shared database with separate schema per tenant
+  DEDICATED /// Dedicated database per tenant
+}
 
-  @@unique([email, status])
-  @@map("signup_attempts")
+enum TenantStatus {
+  ACTIVE    /// Tenant is active and can be accessed
+  SUSPENDED /// Tenant is temporarily suspended
+  ARCHIVED  /// Tenant is archived (soft delete)
 }
