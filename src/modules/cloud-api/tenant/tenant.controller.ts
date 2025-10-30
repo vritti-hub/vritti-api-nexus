@@ -16,7 +16,7 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { TenantResponseDto } from './dto/tenant-response.dto';
 
-@Controller('tenants')
+@Controller()
 export class TenantController {
   private readonly logger = new Logger(TenantController.name);
 
@@ -32,7 +32,7 @@ export class TenantController {
     @Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
     createTenantDto: CreateTenantDto,
   ): Promise<TenantResponseDto> {
-    this.logger.log(`POST /tenants - Creating tenant: ${createTenantDto.slug}`);
+    this.logger.log(`POST /tenants - Creating tenant: ${createTenantDto.subdomain}`);
     return await this.tenantService.create(createTenantDto);
   }
 
@@ -54,16 +54,6 @@ export class TenantController {
   async findById(@Param('id') id: string): Promise<TenantResponseDto> {
     this.logger.log(`GET /tenants/${id} - Fetching tenant by ID`);
     return await this.tenantService.findById(id);
-  }
-
-  /**
-   * Get tenant by slug
-   * GET /tenants/slug/:slug
-   */
-  @Get('slug/:slug')
-  async findBySlug(@Param('slug') slug: string): Promise<TenantResponseDto> {
-    this.logger.log(`GET /tenants/slug/${slug} - Fetching tenant by slug`);
-    return await this.tenantService.findBySlug(slug);
   }
 
   /**

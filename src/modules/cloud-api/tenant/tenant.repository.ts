@@ -23,12 +23,12 @@ export class TenantRepository {
    */
   async create(data: CreateTenantDto): Promise<Tenant> {
     const prisma = await this.getPrisma();
-    this.logger.log(`Creating tenant: ${data.slug}`);
+    this.logger.log(`Creating tenant: ${data.subdomain}`);
 
     return await prisma.tenant.create({
       data: {
         subdomain: data.subdomain,
-        slug: data.slug,
+
         name: data.name,
         description: data.description,
         dbType: data.dbType,
@@ -70,18 +70,6 @@ export class TenantRepository {
   }
 
   /**
-   * Find tenant by slug
-   */
-  async findBySlug(slug: string): Promise<Tenant | null> {
-    const prisma = await this.getPrisma();
-    this.logger.debug(`Finding tenant by slug: ${slug}`);
-
-    return await prisma.tenant.findUnique({
-      where: { slug },
-    });
-  }
-
-  /**
    * Find tenant by subdomain
    */
   async findBySubdomain(subdomain: string): Promise<Tenant | null> {
@@ -104,7 +92,7 @@ export class TenantRepository {
       where: { id },
       data: {
         subdomain: data.subdomain,
-        slug: data.slug,
+
         name: data.name,
         description: data.description,
         dbType: data.dbType,

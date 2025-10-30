@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_INTERCEPTOR, RouterModule } from '@nestjs/core';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -13,7 +13,8 @@ import {
   DatabaseModuleOptions,
   TenantContextInterceptor,
 } from '@vritti/api-sdk';
-import { TenantModule } from './modules/tenant/tenant.module';
+import { CloudApiModule } from './modules/cloud-api/cloud-api.module';
+import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
 
 @Module({
   imports: [
@@ -48,7 +49,19 @@ import { TenantModule } from './modules/tenant/tenant.module';
         return options;
       },
     }),
-    TenantModule,
+    CloudApiModule,
+    RouterModule.register([
+      {
+        path: 'cloud-api',
+        module: CloudApiModule,
+        children: [
+          {
+            path: 'tenants',
+            module: TenantModule,
+          },
+        ],
+      },
+    ]),
   ],
   controllers: [AppController],
   providers: [

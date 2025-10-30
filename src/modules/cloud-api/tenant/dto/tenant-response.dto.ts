@@ -3,7 +3,6 @@ import { DatabaseType, TenantStatus } from '@prisma/client';
 export class TenantResponseDto {
   id: string;
   subdomain: string;
-  slug: string;
   name: string;
   description?: string | null;
   dbType: DatabaseType;
@@ -32,7 +31,6 @@ export class TenantResponseDto {
     return new TenantResponseDto({
       id: tenant.id,
       subdomain: tenant.subdomain,
-      slug: tenant.slug,
       name: tenant.name,
       description: tenant.description,
       dbType: tenant.dbType,
