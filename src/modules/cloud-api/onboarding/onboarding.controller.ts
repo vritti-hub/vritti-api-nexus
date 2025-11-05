@@ -1,19 +1,19 @@
 import {
-  Controller,
-  Post,
-  Get,
   Body,
-  Request,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Logger,
+  Post,
+  Request,
 } from '@nestjs/common';
-import { Public, Onboarding } from '@vritti/api-sdk';
-import { OnboardingService } from './services/onboarding.service';
-import { EmailVerificationService } from './services/email-verification.service';
+import { Onboarding, Public } from '@vritti/api-sdk';
+import { OnboardingStatusResponseDto } from './dto/onboarding-status-response.dto';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
-import { OnboardingStatusResponseDto } from './dto/onboarding-status-response.dto';
+import { EmailVerificationService } from './services/email-verification.service';
+import { OnboardingService } from './services/onboarding.service';
 
 /**
  * Onboarding Controller

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaClient } from '@prisma/client';
 
-import { APP_INTERCEPTOR, RouterModule } from '@nestjs/core';
+import { RouterModule } from '@nestjs/core';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -12,7 +12,6 @@ import {
   AuthConfigModule,
   DatabaseModule,
   DatabaseModuleOptions,
-  TenantContextInterceptor,
 } from '@vritti/api-sdk';
 import { CloudApiModule } from './modules/cloud-api/cloud-api.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
@@ -25,7 +24,8 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
       validate,
     }),
     // Multi-tenant database module (Gateway Mode)
-    DatabaseModule.forRootAsync({
+    // forServer() automatically registers TenantContextInterceptor and imports RequestModule
+    DatabaseModule.forServer({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
         const options: DatabaseModuleOptions = {
@@ -70,10 +70,6 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
   controllers: [AppController],
   providers: [
     AppService,
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TenantContextInterceptor,
-    },
   ],
 })
 export class AppModule {}
