@@ -96,7 +96,6 @@ export class OnboardingService {
     const userResponse = await this.userService.create(
       {
         email: dto.email,
-        password: dto.password,
         firstName: dto.firstName,
         lastName: dto.lastName,
       },

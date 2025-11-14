@@ -7,8 +7,8 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { AppModule } from './app.module';
 import { CsrfGuard } from '@vritti/api-sdk';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -33,7 +33,6 @@ async function bootstrap() {
       secure: process.env.NODE_ENV === 'production',
       path: '/', // Cookie must be available for all endpoints
     },
-    // getUserInfo: (req) => req.user?.id || '',
     csrfOpts: {
       hmacKey: configService.getOrThrow<string>('CSRF_HMAC_KEY'),
     },
