@@ -32,7 +32,7 @@
     "@nestjs/platform-fastify": "^11.1.6",
     "@prisma/adapter-pg": "^6.17.1",
     "@prisma/client": "^6.17.1",
-    "@vritti/api-sdk": "^0.0.5",
+    "@vritti/api-sdk": "^0.0.6",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",

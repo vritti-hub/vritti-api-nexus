@@ -3771,10 +3771,10 @@
   resolved "https://registry.yarnpkg.com/@unrs/resolver-binding-win32-x64-msvc/-/resolver-binding-win32-x64-msvc-1.11.1.tgz#538b1e103bf8d9864e7b85cc96fa8d6fb6c40777"
   integrity sha512-lrW200hZdbfRtztbygyaq/6jP6AKE8qQN2KvPcJ+x7wiD038YtnYtZ82IMNJ69GJibV7bwL3y9FgK+5w/pYt6g==
 
-"@vritti/api-sdk@^0.0.5":
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/@vritti/api-sdk/-/api-sdk-0.0.5.tgz#4f9f61701ee701d82b8bd7d4769787f3921615c8"
-  integrity sha512-83tGT0Bof8TCLhC6RgD2xk/aamEB5r38uv2EghjkBqoY5JJXdVo5y/zlcQHUUWBn9+Uu4F/YHehiYe6dzVJe+Q==
+"@vritti/api-sdk@^0.1.2":
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/@vritti/api-sdk/-/api-sdk-0.0.6.tgz#b513e9b85110a760d309f6c1e979d608907c8e68"
+  integrity sha512-l23FSTmJo1ZoWLMbOTkXqBN+sziniSRfPSJeVG2fONIpYAupk+VAJEMkBl7Ws6SsUdJY2sD43sav1ZMW1spx8Q==
 
 "@webassemblyjs/ast@1.14.1", "@webassemblyjs/ast@^1.14.1":
   version "1.14.1"
