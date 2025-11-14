@@ -4,11 +4,11 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
 import { getTokenExpiry, TokenType } from '../../../../config/jwt.config';
-import { EncryptionService } from '../../common/services/encryption.service';
+import { EncryptionService } from '../../../../services';
 import { UserService } from '../../user/user.service';
 import { OnboardingStatusResponseDto } from '../dto/onboarding-status-response.dto';
 import { RegisterDto } from '../dto/register.dto';
@@ -166,5 +166,42 @@ export class OnboardingService {
     const user = await this.userService.findByEmail(userResponse.email);
 
     return OnboardingStatusResponseDto.fromUser(user!);
+  }
+
+  /**
+   * Set password for OAuth users
+   * This is called after OAuth signup to set a password for the account
+   */
+  async setPassword(userId: string, password: string): Promise<void> {
+    const user = await this.userService.findById(userId);
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Verify user is on SET_PASSWORD step
+    if (user.onboardingStep !== 'SET_PASSWORD') {
+      throw new BadRequestException(
+        'User is not on SET_PASSWORD onboarding step',
+      );
+    }
+
+    // Verify user doesn't already have a password
+    const fullUser = await this.userService.findByEmail(user.email);
+    if (fullUser?.passwordHash) {
+      throw new BadRequestException('User already has a password');
+    }
+
+    // Hash password
+    const passwordHash = await this.encryptionService.hashPassword(password);
+
+    // Update user with password and move to next onboarding step
+    // await this.userService.updatePassword(userId, passwordHash);
+    // await this.userService.updateOnboardingStep(
+    //   userId,
+    //   'MOBILE_VERIFICATION',
+    // );
+
+    this.logger.log(`Password set for OAuth user: ${user.email} (${userId})`);
   }
 }

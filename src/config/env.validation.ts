@@ -113,7 +113,9 @@ class EnvironmentVariables {
  * @returns The original config object if validation passes
  * @throws Error if validation fails
  */
-export function validate(config: Record<string, unknown>): Record<string, unknown> {
+export function validate(
+  config: Record<string, unknown>,
+): Record<string, unknown> {
   // Convert numeric string values to numbers for validation
   const processedConfig = {
     ...config,

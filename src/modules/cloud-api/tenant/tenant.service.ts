@@ -72,7 +72,7 @@ export class TenantService {
    * Get tenant by ID
    */
   async findById(id: string): Promise<TenantResponseDto> {
-    const tenant = await this.tenantRepository.findById(id, true); // Include config
+    const tenant = await this.tenantRepository.findByIdWithConfig(id);
 
     if (!tenant) {
       throw new NotFoundException(`Tenant with ID '${id}' not found`);
@@ -104,7 +104,7 @@ export class TenantService {
     updateTenantDto: UpdateTenantDto,
   ): Promise<TenantResponseDto> {
     // Check if tenant exists
-    const existing = await this.tenantRepository.findById(id, true); // Include config
+    const existing = await this.tenantRepository.findByIdWithConfig(id);
     if (!existing) {
       throw new NotFoundException(`Tenant with ID '${id}' not found`);
     }
@@ -142,7 +142,14 @@ export class TenantService {
 
     // Update database configuration if any DB fields are provided
     const hasDbConfigFields =
-      dbHost || dbPort || dbUsername || dbPassword || dbName || dbSchema || dbSslMode || connectionPoolSize;
+      dbHost ||
+      dbPort ||
+      dbUsername ||
+      dbPassword ||
+      dbName ||
+      dbSchema ||
+      dbSslMode ||
+      connectionPoolSize;
 
     if (hasDbConfigFields) {
       const configExists = await this.configService.exists(id);

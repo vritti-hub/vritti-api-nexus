@@ -7,6 +7,7 @@ import { RouterModule } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validate } from './config/env.validation';
+import { CsrfController } from './csrf.controller';
 
 import {
   AuthConfigModule,
@@ -67,9 +68,7 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
       },
     ]),
   ],
-  controllers: [AppController],
-  providers: [
-    AppService,
-  ],
+  controllers: [AppController, CsrfController],
+  providers: [AppService],
 })
 export class AppModule {}

@@ -8,7 +8,7 @@ import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { UserService } from '../../user/user.service';
 import { UserResponseDto } from '../../user/dto/user-response.dto';
-import { EncryptionService } from '../../common/services/encryption.service';
+import { EncryptionService } from '../../../../services';
 import { SessionService } from './session.service';
 import { JwtAuthService } from './jwt.service';
 
@@ -68,11 +68,8 @@ export class AuthService {
     }
 
     // Create session and generate tokens
-    const { accessToken, refreshToken } = await this.sessionService.createSession(
-      user.id,
-      ipAddress,
-      userAgent,
-    );
+    const { accessToken, refreshToken } =
+      await this.sessionService.createSession(user.id, ipAddress, userAgent);
 
     // Update last login timestamp
     await this.userService.updateLastLogin(user.id);

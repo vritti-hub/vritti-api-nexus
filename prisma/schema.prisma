@@ -283,7 +283,8 @@ enum AccountStatus {
 }
 
 enum OnboardingStep {
-  EMAIL_VERIFICATION    /// Step 1: Verify email or set password (OAuth)
+  EMAIL_VERIFICATION    /// Step 1: Verify email
+  SET_PASSWORD          /// Step 1b: Set password (OAuth users only)
   MOBILE_VERIFICATION   /// Step 2: Verify phone number
   TWO_FACTOR_SETUP      /// Step 3: Setup 2FA (optional)
   COMPLETE              /// Onboarding complete
@@ -304,5 +305,32 @@ enum OAuthProviderType {
   GOOGLE
   MICROSOFT
   APPLE
-  LINKEDIN
+  FACEBOOK
+  X
+}
+
+/// OAuth state tokens - for CSRF protection in OAuth flows
+/// Used for database-backed OAuth state management (instead of Redis)
+model OAuthState {
+  id String @id @default(uuid())
+
+  // State token (random, signed)
+  stateToken String @unique @map("state_token")
+
+  // Provider and optional user context
+  provider OAuthProviderType
+  userId   String?         @map("user_id") /// For "link provider" flows
+
+  // PKCE (OAuth 2.1)
+  codeVerifier String @map("code_verifier")
+
+  // Expiry (10 minutes TTL)
+  expiresAt DateTime @map("expires_at")
+
+  // Metadata
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([stateToken])
+  @@index([expiresAt]) // For cleanup queries
+  @@map("oauth_states")
 }

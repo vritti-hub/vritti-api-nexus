@@ -25,7 +25,10 @@ export class OnboardingStatusResponseDto {
   /**
    * Create from Prisma User model
    */
-  static fromUser(user: any, onboardingToken?: string): OnboardingStatusResponseDto {
+  static fromUser(
+    user: any,
+    onboardingToken?: string,
+  ): OnboardingStatusResponseDto {
     return new OnboardingStatusResponseDto({
       userId: user.id,
       email: user.email,

@@ -1,5 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { EncryptionService } from '../../common/services/encryption.service';
+import { EncryptionService } from '../../../../services';
 
 /**
  * OTP Service
@@ -73,7 +73,9 @@ export class OtpService {
 
     // Check if expired
     if (this.isOtpExpired(verification.expiresAt)) {
-      throw new BadRequestException('OTP has expired. Please request a new one');
+      throw new BadRequestException(
+        'OTP has expired. Please request a new one',
+      );
     }
 
     // Check if max attempts exceeded

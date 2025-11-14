@@ -32,7 +32,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any): Promise<UserResponseDto> {
     // Check token type
     if (payload.type !== TokenType.ACCESS) {
-      throw new UnauthorizedException('Invalid token type. Expected access token');
+      throw new UnauthorizedException(
+        'Invalid token type. Expected access token',
+      );
     }
 
     // Validate user exists and is active

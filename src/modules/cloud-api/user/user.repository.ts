@@ -1,60 +1,26 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { PrismaClient, User } from '@prisma/client';
-import { PrimaryDatabaseService } from '@vritti/api-sdk';
+import { Injectable } from '@nestjs/common';
+import { User } from '@prisma/client';
+import { PrimaryBaseRepository, PrimaryDatabaseService } from '@vritti/api-sdk';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
-export class UserRepository {
-  private readonly logger = new Logger(UserRepository.name);
-
-  constructor(private readonly database: PrimaryDatabaseService) {}
-
-  /**
-   * Get Prisma client for user database
-   */
-  private async getPrisma(): Promise<PrismaClient> {
-    return await this.database.getPrimaryDbClient<PrismaClient>();
+export class UserRepository extends PrimaryBaseRepository<
+  User,
+  CreateUserDto & { passwordHash?: string },
+  UpdateUserDto & { passwordHash?: string }
+> {
+  constructor(database: PrimaryDatabaseService) {
+    super(database, (prisma) => prisma.user);
   }
 
   /**
-   * Create a new user
-   */
-  async create(data: CreateUserDto & { passwordHash?: string }): Promise<User> {
-    const prisma = await this.getPrisma();
-    this.logger.log(`Creating user: ${data.email}`);
-
-    return await prisma.user.create({
-      data: {
-        email: data.email,
-        passwordHash: data.passwordHash,
-        firstName: data.firstName,
-        lastName: data.lastName,
-      },
-    });
-  }
-
-  /**
-   * Find all users
+   * Find all users (with custom ordering)
    */
   async findAll(): Promise<User[]> {
-    const prisma = await this.getPrisma();
     this.logger.debug('Finding all users');
-
-    return await prisma.user.findMany({
+    return this.model.findMany({
       orderBy: { createdAt: 'desc' },
-    });
-  }
-
-  /**
-   * Find user by ID
-   */
-  async findById(id: string): Promise<User | null> {
-    const prisma = await this.getPrisma();
-    this.logger.debug(`Finding user by ID: ${id}`);
-
-    return await prisma.user.findUnique({
-      where: { id },
     });
   }
 
@@ -62,47 +28,24 @@ export class UserRepository {
    * Find user by email
    */
   async findByEmail(email: string): Promise<User | null> {
-    const prisma = await this.getPrisma();
     this.logger.debug(`Finding user by email: ${email}`);
-
-    return await prisma.user.findUnique({
-      where: { email },
-    });
+    return this.findOne({ where: { email } });
   }
 
   /**
    * Find user by phone
    */
   async findByPhone(phone: string): Promise<User | null> {
-    const prisma = await this.getPrisma();
     this.logger.debug(`Finding user by phone: ${phone}`);
-
-    return await prisma.user.findFirst({
-      where: { phone },
-    });
-  }
-
-  /**
-   * Update user
-   */
-  async update(id: string, data: UpdateUserDto & { passwordHash?: string }): Promise<User> {
-    const prisma = await this.getPrisma();
-    this.logger.log(`Updating user: ${id}`);
-
-    return await prisma.user.update({
-      where: { id },
-      data,
-    });
+    return this.model.findFirst({ where: { phone } });
   }
 
   /**
    * Update last login timestamp
    */
   async updateLastLogin(id: string): Promise<User> {
-    const prisma = await this.getPrisma();
     this.logger.debug(`Updating last login for user: ${id}`);
-
-    return await prisma.user.update({
+    return this.model.update({
       where: { id },
       data: { lastLoginAt: new Date() },
     });
@@ -112,10 +55,8 @@ export class UserRepository {
    * Mark email as verified
    */
   async markEmailVerified(id: string): Promise<User> {
-    const prisma = await this.getPrisma();
     this.logger.log(`Marking email verified for user: ${id}`);
-
-    return await prisma.user.update({
+    return this.model.update({
       where: { id },
       data: {
         emailVerified: true,
@@ -127,11 +68,13 @@ export class UserRepository {
   /**
    * Mark phone as verified
    */
-  async markPhoneVerified(id: string, phone: string, phoneCountry: string): Promise<User> {
-    const prisma = await this.getPrisma();
+  async markPhoneVerified(
+    id: string,
+    phone: string,
+    phoneCountry: string,
+  ): Promise<User> {
     this.logger.log(`Marking phone verified for user: ${id}`);
-
-    return await prisma.user.update({
+    return this.model.update({
       where: { id },
       data: {
         phone,
@@ -143,28 +86,46 @@ export class UserRepository {
   }
 
   /**
-   * Delete user (soft delete by setting status to DEACTIVATED)
+   * Create user from OAuth profile
+   * This method allows creating a user with OAuth-specific fields that aren't in CreateUserDto
    */
-  async delete(id: string): Promise<User> {
-    const prisma = await this.getPrisma();
-    this.logger.log(`Deactivating user: ${id}`);
-
-    return await prisma.user.update({
-      where: { id },
-      data: { accountStatus: 'DEACTIVATED' },
+  async createFromOAuth(data: {
+    email: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    emailVerified?: boolean;
+    onboardingStep?: any;
+    profilePictureUrl?: string | null;
+  }): Promise<User> {
+    this.logger.log(`Creating user from OAuth: ${data.email}`);
+    return this.model.create({
+      data: {
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        passwordHash: null, // OAuth users don't have password initially
+        emailVerified: data.emailVerified ?? false,
+        onboardingStep: data.onboardingStep,
+        profilePictureUrl: data.profilePictureUrl,
+      },
     });
   }
 
   /**
-   * Hard delete user (permanently remove from database)
-   * Use with caution!
+   * Delete user (soft delete by setting status to DEACTIVATED)
+   *
+   * This method performs a soft delete by changing the account status rather than
+   * removing the record from the database. For hard delete (permanent removal),
+   * use the inherited base repository delete() method directly on the model.
+   *
+   * Note: This overrides the base repository's delete() method to implement
+   * soft delete behavior specific to the User entity.
    */
-  async hardDelete(id: string): Promise<User> {
-    const prisma = await this.getPrisma();
-    this.logger.warn(`Hard deleting user: ${id}`);
-
-    return await prisma.user.delete({
+  async delete(id: string): Promise<User> {
+    this.logger.log(`Deactivating user: ${id}`);
+    return this.model.update({
       where: { id },
+      data: { accountStatus: 'DEACTIVATED' },
     });
   }
 }

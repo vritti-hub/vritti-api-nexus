@@ -4,7 +4,7 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { EmailService } from '../../common/services/email.service';
+import { EmailService } from '../../../../services';
 import { UserService } from '../../user/user.service';
 import { EmailVerificationRepository } from '../repositories/email-verification.repository';
 import { OtpService } from './otp.service';
@@ -103,7 +103,7 @@ export class EmailVerificationService {
     }
 
     // Delete old verifications
-    await this.emailVerificationRepo.deleteByUserId(userId);
+    await this.emailVerificationRepo.deleteMany({ userId });
 
     // Send new OTP
     await this.sendVerificationOtp(userId, userResponse.email);

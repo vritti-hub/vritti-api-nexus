@@ -34,7 +34,9 @@ export class TenantDatabaseConfigService {
     this.logger.log(`Creating database config for tenant: ${tenantId}`);
 
     // Check if config already exists
-    const existing = await this.configRepository.findByTenantId(tenantId);
+    const existing = await this.configRepository.findOne({
+      where: { tenantId },
+    });
     if (existing) {
       throw new BadRequestException(
         `Database configuration already exists for tenant: ${tenantId}`,
@@ -46,7 +48,17 @@ export class TenantDatabaseConfigService {
 
     // Create configuration
     // TODO: Encrypt dbPassword before storing
-    const config = await this.configRepository.create(tenantId, dto as any);
+    const config = await this.configRepository.create({
+      tenantId,
+      dbHost: dto.dbHost,
+      dbPort: dto.dbPort,
+      dbUsername: dto.dbUsername,
+      dbPassword: dto.dbPassword,
+      dbName: dto.dbName,
+      dbSchema: dto.dbSchema,
+      dbSslMode: dto.dbSslMode,
+      connectionPoolSize: dto.connectionPoolSize,
+    });
 
     this.logger.log(`Database config created for tenant: ${tenantId}`);
     return TenantDatabaseConfigResponseDto.fromPrisma(config);
@@ -61,7 +73,7 @@ export class TenantDatabaseConfigService {
   async getByTenantId(
     tenantId: string,
   ): Promise<TenantDatabaseConfigResponseDto> {
-    const config = await this.configRepository.findByTenantId(tenantId);
+    const config = await this.configRepository.findOne({ where: { tenantId } });
     if (!config) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
@@ -85,7 +97,9 @@ export class TenantDatabaseConfigService {
     this.logger.log(`Updating database config for tenant: ${tenantId}`);
 
     // Check if config exists
-    const existing = await this.configRepository.findByTenantId(tenantId);
+    const existing = await this.configRepository.findOne({
+      where: { tenantId },
+    });
     if (!existing) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
@@ -103,7 +117,7 @@ export class TenantDatabaseConfigService {
     }
 
     // TODO: Encrypt dbPassword if provided in update
-    const config = await this.configRepository.update(tenantId, dto);
+    const config = await this.configRepository.updateByTenantId(tenantId, dto);
 
     this.logger.log(`Database config updated for tenant: ${tenantId}`);
     return TenantDatabaseConfigResponseDto.fromPrisma(config);
@@ -118,14 +132,16 @@ export class TenantDatabaseConfigService {
     this.logger.log(`Deleting database config for tenant: ${tenantId}`);
 
     // Check if config exists
-    const existing = await this.configRepository.findByTenantId(tenantId);
+    const existing = await this.configRepository.findOne({
+      where: { tenantId },
+    });
     if (!existing) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
       );
     }
 
-    await this.configRepository.delete(tenantId);
+    await this.configRepository.deleteByTenantId(tenantId);
     this.logger.log(`Database config deleted for tenant: ${tenantId}`);
   }
 
@@ -135,7 +151,7 @@ export class TenantDatabaseConfigService {
    * @returns True if config exists
    */
   async exists(tenantId: string): Promise<boolean> {
-    return this.configRepository.exists(tenantId);
+    return this.configRepository.exists({ tenantId });
   }
 
   /**
@@ -143,12 +159,12 @@ export class TenantDatabaseConfigService {
    * @param dto - Database configuration to validate
    * @throws BadRequestException if validation fails
    */
-  private validateDatabaseConfig(dto: Partial<CreateTenantDatabaseConfigDto>): void {
+  private validateDatabaseConfig(
+    dto: Partial<CreateTenantDatabaseConfigDto>,
+  ): void {
     // Validate host
     if (dto.dbHost && !this.isValidHost(dto.dbHost)) {
-      throw new BadRequestException(
-        'Invalid database host format',
-      );
+      throw new BadRequestException('Invalid database host format');
     }
 
     // Validate port
@@ -159,7 +175,10 @@ export class TenantDatabaseConfigService {
     }
 
     // Validate connection pool size
-    if (dto.connectionPoolSize && (dto.connectionPoolSize < 1 || dto.connectionPoolSize > 100)) {
+    if (
+      dto.connectionPoolSize &&
+      (dto.connectionPoolSize < 1 || dto.connectionPoolSize > 100)
+    ) {
       throw new BadRequestException(
         'Connection pool size must be between 1 and 100',
       );
@@ -178,8 +197,11 @@ export class TenantDatabaseConfigService {
    */
   private isValidHost(host: string): boolean {
     // Basic hostname validation (allows localhost, IP addresses, domain names)
-    const hostPattern = /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+    const hostPattern =
+      /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
     const ipPattern = /^(\d{1,3}\.){3}\d{1,3}$/;
-    return hostPattern.test(host) || ipPattern.test(host) || host === 'localhost';
+    return (
+      hostPattern.test(host) || ipPattern.test(host) || host === 'localhost'
+    );
   }
 }

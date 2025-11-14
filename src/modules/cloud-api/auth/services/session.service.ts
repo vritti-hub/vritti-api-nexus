@@ -63,7 +63,9 @@ export class SessionService {
     const payload = this.jwtService.verifyRefreshToken(refreshToken);
 
     // Find session by refresh token
-    const session = await this.sessionRepository.findByRefreshToken(refreshToken);
+    const session = await this.sessionRepository.findOne({
+      where: { refreshToken },
+    });
 
     if (!session || !session.isActive) {
       throw new UnauthorizedException('Invalid or expired refresh token');
@@ -71,8 +73,10 @@ export class SessionService {
 
     // Check if refresh token is expired
     if (new Date() > session.refreshTokenExpiresAt) {
-      await this.sessionRepository.invalidate(session.id);
-      throw new UnauthorizedException('Refresh token expired. Please login again');
+      await this.sessionRepository.update(session.id, { isActive: false });
+      throw new UnauthorizedException(
+        'Refresh token expired. Please login again',
+      );
     }
 
     // Generate new access token
@@ -98,10 +102,12 @@ export class SessionService {
    * Invalidate a session (logout)
    */
   async invalidateSession(accessToken: string): Promise<void> {
-    const session = await this.sessionRepository.findByAccessToken(accessToken);
+    const session = await this.sessionRepository.findOne({
+      where: { accessToken },
+    });
 
     if (session) {
-      await this.sessionRepository.invalidate(session.id);
+      await this.sessionRepository.update(session.id, { isActive: false });
       this.logger.log(`Invalidated session: ${session.id}`);
     }
   }
@@ -126,7 +132,9 @@ export class SessionService {
    * Validate access token
    */
   async validateAccessToken(accessToken: string): Promise<Session> {
-    const session = await this.sessionRepository.findByAccessToken(accessToken);
+    const session = await this.sessionRepository.findOne({
+      where: { accessToken },
+    });
 
     if (!session || !session.isActive) {
       throw new UnauthorizedException('Invalid or expired access token');

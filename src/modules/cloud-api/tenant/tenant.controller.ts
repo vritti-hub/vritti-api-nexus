@@ -30,7 +30,9 @@ export class TenantController {
   async create(
     @Body() createTenantDto: CreateTenantDto,
   ): Promise<TenantResponseDto> {
-    this.logger.log(`POST /tenants - Creating tenant: ${createTenantDto.subdomain}`);
+    this.logger.log(
+      `POST /tenants - Creating tenant: ${createTenantDto.subdomain}`,
+    );
     return await this.tenantService.create(createTenantDto);
   }
 

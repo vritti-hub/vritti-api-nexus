@@ -23,10 +23,10 @@ export const getTokenExpiry = (configService: ConfigService) => ({
   ONBOARDING: '24h' as string,
 
   // Access token: from env, default 15 minutes
-  ACCESS: configService.get<string>('JWT_ACCESS_EXPIRY', '15m') as string,
+  ACCESS: configService.get<string>('JWT_ACCESS_EXPIRY', '15m'),
 
   // Refresh token: from env, default 30 days
-  REFRESH: configService.get<string>('JWT_REFRESH_EXPIRY', '30d') as string,
+  REFRESH: configService.get<string>('JWT_REFRESH_EXPIRY', '30d'),
 
   // Password reset token: default 15 minutes
   PASSWORD_RESET: '15m' as string,

@@ -115,7 +115,9 @@ export class UserService {
    */
   async markEmailVerified(id: string): Promise<UserResponseDto> {
     const user = await this.userRepository.markEmailVerified(id);
-    this.logger.log(`Marked email verified for user: ${user.email} (${user.id})`);
+    this.logger.log(
+      `Marked email verified for user: ${user.email} (${user.id})`,
+    );
     return UserResponseDto.fromPrisma(user);
   }
 
@@ -127,8 +129,14 @@ export class UserService {
     phone: string,
     phoneCountry: string,
   ): Promise<UserResponseDto> {
-    const user = await this.userRepository.markPhoneVerified(id, phone, phoneCountry);
-    this.logger.log(`Marked phone verified for user: ${user.email} (${user.id})`);
+    const user = await this.userRepository.markPhoneVerified(
+      id,
+      phone,
+      phoneCountry,
+    );
+    this.logger.log(
+      `Marked phone verified for user: ${user.email} (${user.id})`,
+    );
     return UserResponseDto.fromPrisma(user);
   }
 

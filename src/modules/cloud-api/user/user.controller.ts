@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Get, Param, Logger } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserResponseDto } from './dto/user-response.dto';
 
