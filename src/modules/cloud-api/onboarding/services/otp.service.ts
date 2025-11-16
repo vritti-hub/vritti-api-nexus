@@ -1,4 +1,5 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException } from '@vritti/api-sdk';
 import { EncryptionService } from '../../../../services';
 
 /**
@@ -68,20 +69,28 @@ export class OtpService {
   }): void {
     // Check if already verified
     if (verification.isVerified) {
-      throw new BadRequestException('OTP already verified');
+      throw new BadRequestException(
+        'code',
+        'OTP already verified',
+        'This verification code has already been used. You can proceed to the next step.'
+      );
     }
 
     // Check if expired
     if (this.isOtpExpired(verification.expiresAt)) {
       throw new BadRequestException(
+        'code',
         'OTP has expired. Please request a new one',
+        'Your verification code has expired. Please request a new code to continue.'
       );
     }
 
     // Check if max attempts exceeded
     if (this.isMaxAttemptsExceeded(verification.attempts)) {
       throw new BadRequestException(
+        'code',
         'Maximum verification attempts exceeded. Please request a new OTP',
+        'You have exceeded the maximum number of verification attempts. Please request a new code to try again.'
       );
     }
   }

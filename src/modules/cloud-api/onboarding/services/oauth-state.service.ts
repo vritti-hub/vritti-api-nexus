@@ -1,4 +1,5 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { UnauthorizedException } from '@vritti/api-sdk';
 import { ConfigService } from '@nestjs/config';
 import { OAuthProviderType } from '@prisma/client';
 import * as crypto from 'crypto';
@@ -71,7 +72,10 @@ export class OAuthStateService {
     // Verify HMAC signature
     if (!this.verifyStateToken(stateToken)) {
       this.logger.warn('Invalid OAuth state token signature');
-      throw new UnauthorizedException('Invalid state token');
+      throw new UnauthorizedException(
+        'Invalid state token',
+        'The authentication request could not be verified. Please try logging in again.'
+      );
     }
 
     // Query database for state record
@@ -79,7 +83,10 @@ export class OAuthStateService {
 
     if (!stateRecord) {
       this.logger.warn('OAuth state token not found in database');
-      throw new UnauthorizedException('Invalid or expired state token');
+      throw new UnauthorizedException(
+        'Invalid or expired state token',
+        'Your authentication session has expired or is invalid. Please try logging in again.'
+      );
     }
 
     // Check expiry
@@ -87,7 +94,10 @@ export class OAuthStateService {
       // Delete expired state
       await this.stateRepository.delete(stateRecord.id);
       this.logger.warn('OAuth state token expired');
-      throw new UnauthorizedException('State token expired');
+      throw new UnauthorizedException(
+        'State token expired',
+        'Your authentication session has expired. Please try logging in again.'
+      );
     }
 
     // Delete state (one-time use)

@@ -1,9 +1,8 @@
+import { Injectable, Logger } from '@nestjs/common';
 import {
-  Injectable,
-  Logger,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
+} from '@vritti/api-sdk';
 import { TenantDatabaseConfigRepository } from './tenant-database-config.repository';
 import { CreateTenantDatabaseConfigDto } from './dto/create-tenant-database-config.dto';
 import { UpdateTenantDatabaseConfigDto } from './dto/update-tenant-database-config.dto';
@@ -40,6 +39,7 @@ export class TenantDatabaseConfigService {
     if (existing) {
       throw new BadRequestException(
         `Database configuration already exists for tenant: ${tenantId}`,
+        'A database configuration already exists for this organization. Please update the existing configuration instead.'
       );
     }
 
@@ -77,6 +77,7 @@ export class TenantDatabaseConfigService {
     if (!config) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
+        'No database configuration exists for this organization. Please create one first.'
       );
     }
 
@@ -103,6 +104,7 @@ export class TenantDatabaseConfigService {
     if (!existing) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
+        'No database configuration exists for this organization. Please create one first.'
       );
     }
 
@@ -138,6 +140,7 @@ export class TenantDatabaseConfigService {
     if (!existing) {
       throw new NotFoundException(
         `Database configuration not found for tenant: ${tenantId}`,
+        'No database configuration exists for this organization. There is nothing to delete.'
       );
     }
 
@@ -164,13 +167,19 @@ export class TenantDatabaseConfigService {
   ): void {
     // Validate host
     if (dto.dbHost && !this.isValidHost(dto.dbHost)) {
-      throw new BadRequestException('Invalid database host format');
+      throw new BadRequestException(
+        'dbHost',
+        'Invalid database host format',
+        'The database host format is invalid. Please provide a valid hostname, IP address, or localhost.'
+      );
     }
 
     // Validate port
     if (dto.dbPort && (dto.dbPort < 1 || dto.dbPort > 65535)) {
       throw new BadRequestException(
+        'dbPort',
         'Database port must be between 1 and 65535',
+        'The database port must be a valid port number between 1 and 65535.'
       );
     }
 
@@ -180,7 +189,9 @@ export class TenantDatabaseConfigService {
       (dto.connectionPoolSize < 1 || dto.connectionPoolSize > 100)
     ) {
       throw new BadRequestException(
+        'connectionPoolSize',
         'Connection pool size must be between 1 and 100',
+        'The connection pool size must be between 1 and 100 connections.'
       );
     }
 

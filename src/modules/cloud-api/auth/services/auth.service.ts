@@ -1,9 +1,5 @@
-import {
-  Injectable,
-  Logger,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { UnauthorizedException, BadRequestException } from '@vritti/api-sdk';
 import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { UserService } from '../../user/user.service';
@@ -36,13 +32,17 @@ export class AuthService {
     const user = await this.userService.findByEmail(dto.email);
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        'Invalid credentials',
+        'The email or password you entered is incorrect. Please check your credentials and try again.'
+      );
     }
 
     // Check if onboarding is complete
     if (!user.onboardingComplete) {
       throw new BadRequestException(
         'Please complete onboarding first. Use /onboarding/register to continue',
+        'Your account setup is incomplete. Please finish registration before logging in.'
       );
     }
 
@@ -50,12 +50,16 @@ export class AuthService {
     if (user.accountStatus !== 'ACTIVE') {
       throw new UnauthorizedException(
         `Account is ${user.accountStatus.toLowerCase()}. Please contact support`,
+        `Your account is ${user.accountStatus.toLowerCase()}. Please contact support for assistance.`
       );
     }
 
     // Verify password
     if (!user.passwordHash) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        'Invalid credentials',
+        'The email or password you entered is incorrect. Please check your credentials and try again.'
+      );
     }
 
     const isPasswordValid = await this.encryptionService.comparePassword(
@@ -64,7 +68,10 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException(
+        'Invalid credentials',
+        'The email or password you entered is incorrect. Please check your credentials and try again.'
+      );
     }
 
     // Create session and generate tokens
@@ -140,7 +147,10 @@ export class AuthService {
 
     // Check if account is active
     if (user.accountStatus !== 'ACTIVE') {
-      throw new UnauthorizedException('Account is not active');
+      throw new UnauthorizedException(
+        'Account is not active',
+        'Your account is not active. Please contact support for assistance.'
+      );
     }
 
     return user;

@@ -1,13 +1,13 @@
 import fastifyCookie from '@fastify/cookie';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
-import { ValidationPipe } from '@nestjs/common';
+import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory, Reflector } from '@nestjs/core';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { CsrfGuard } from '@vritti/api-sdk';
+import { CsrfGuard, HttpExceptionFilter } from '@vritti/api-sdk';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -38,6 +38,11 @@ async function bootstrap() {
     },
   });
 
+  // Register global exception filter for RFC 7807 Problem Details format
+  // This filter transforms all exceptions (custom, NestJS built-in, DTO validation)
+  // into a consistent format with errors array: { errors: [{ field?, message }] }
+  app.useGlobalFilters(new HttpExceptionFilter());
+
   // Register global CSRF guard
   app.useGlobalGuards(new CsrfGuard(app.get(Reflector)));
 
@@ -49,6 +54,11 @@ async function bootstrap() {
       transform: true,
       transformOptions: {
         enableImplicitConversion: true,
+      },
+      // Preserve ValidationError objects with property and constraints fields
+      // This ensures HttpExceptionFilter can extract field names from DTO validation errors
+      exceptionFactory: (errors) => {
+        return new BadRequestException(errors);
       },
     }),
   );

@@ -2,9 +2,9 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  ForbiddenException,
   Logger,
 } from '@nestjs/common';
+import { ForbiddenException } from '@vritti/api-sdk';
 import { Reflector } from '@nestjs/core';
 import { AccountStatus } from '@prisma/client';
 
@@ -35,7 +35,10 @@ export class AccountStatusGuard implements CanActivate {
     const user = request.user; // Set by JwtAuthGuard
 
     if (!user) {
-      throw new ForbiddenException('User not authenticated');
+      throw new ForbiddenException(
+        'User not authenticated',
+        'You must be logged in to access this resource.'
+      );
     }
 
     // Check if user's account status matches required status
@@ -45,6 +48,7 @@ export class AccountStatusGuard implements CanActivate {
       );
       throw new ForbiddenException(
         `Account status must be ${requiredStatuses.join(' or ')}. Current status: ${user.accountStatus}`,
+        `You don't have permission to access this resource. Your account status is ${user.accountStatus}.`
       );
     }
 

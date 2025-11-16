@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Controller,
   Get,
   Logger,
@@ -9,6 +8,7 @@ import {
   Request,
   Res,
 } from '@nestjs/common';
+import { BadRequestException } from '@vritti/api-sdk';
 import { OAuthProviderType } from '@prisma/client';
 import { Onboarding, Public } from '@vritti/api-sdk';
 import type { FastifyReply } from 'fastify';
@@ -83,7 +83,10 @@ export class OAuthController {
     const provider = this.validateProvider(providerStr);
 
     if (!code || !state) {
-      throw new BadRequestException('Missing code or state parameter');
+      throw new BadRequestException(
+        'Missing code or state parameter',
+        'The authentication request is incomplete. Please try logging in again.'
+      );
     }
 
     this.logger.log(`Handling OAuth callback for provider: ${provider}`);
@@ -114,7 +117,11 @@ export class OAuthController {
     const upperProvider = providerStr.toUpperCase();
 
     if (!Object.values(OAuthProviderType).includes(upperProvider as any)) {
-      throw new BadRequestException(`Invalid OAuth provider: ${providerStr}`);
+      throw new BadRequestException(
+        'provider',
+        `Invalid OAuth provider: ${providerStr}`,
+        'The selected login method is not supported. Please choose a different option.'
+      );
     }
 
     return upperProvider as OAuthProviderType;

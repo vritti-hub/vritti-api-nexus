@@ -1,4 +1,5 @@
-import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { UnauthorizedException } from '@vritti/api-sdk';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
@@ -34,6 +35,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (payload.type !== TokenType.ACCESS) {
       throw new UnauthorizedException(
         'Invalid token type. Expected access token',
+        'Invalid authentication token. Please log in again.'
       );
     }
 

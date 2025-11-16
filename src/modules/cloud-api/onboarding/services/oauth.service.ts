@@ -1,10 +1,9 @@
+import { Injectable, Logger } from '@nestjs/common';
 import {
   BadRequestException,
   ConflictException,
-  Injectable,
-  Logger,
   UnauthorizedException,
-} from '@nestjs/common';
+} from '@vritti/api-sdk';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { OnboardingStep, OAuthProviderType } from '@prisma/client';
@@ -110,7 +109,10 @@ export class OAuthService {
 
     // Verify provider matches
     if (stateData.provider !== provider) {
-      throw new UnauthorizedException('Provider mismatch');
+      throw new UnauthorizedException(
+        'Provider mismatch',
+        'The authentication provider does not match your request. Please try logging in again.'
+      );
     }
 
     const oauthProvider = this.getProvider(provider);
@@ -154,7 +156,10 @@ export class OAuthService {
     if (linkToUserId) {
       const user = await this.userService.findById(linkToUserId);
       if (!user) {
-        throw new BadRequestException('User not found');
+        throw new BadRequestException(
+          'User not found',
+          'We couldn\'t find your account. Please check your information or register.'
+        );
       }
       return { user, isNewUser: false };
     }
@@ -166,7 +171,9 @@ export class OAuthService {
       // Check if onboarding is complete
       if (existingUser.onboardingComplete) {
         throw new ConflictException(
+          'email',
           'User already exists with this email. Please login with password.',
+          'An account with this email already exists. Please log in using your password instead.'
         );
       }
 
@@ -241,7 +248,10 @@ export class OAuthService {
   private getProvider(provider: OAuthProviderType): IOAuthProvider {
     const oauthProvider = this.providers.get(provider);
     if (!oauthProvider) {
-      throw new BadRequestException(`Unsupported OAuth provider: ${provider}`);
+      throw new BadRequestException(
+        `Unsupported OAuth provider: ${provider}`,
+        'The selected login method is not available. Please choose a different option.'
+      );
     }
     return oauthProvider;
   }

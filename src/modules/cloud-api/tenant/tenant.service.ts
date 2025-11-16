@@ -1,10 +1,9 @@
+import { Injectable, Logger } from '@nestjs/common';
 import {
   BadRequestException,
   ConflictException,
-  Injectable,
-  Logger,
   NotFoundException,
-} from '@nestjs/common';
+} from '@vritti/api-sdk';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { TenantResponseDto } from './dto/tenant-response.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
@@ -30,7 +29,9 @@ export class TenantService {
     );
     if (existingBySubdomain) {
       throw new ConflictException(
+        'subdomain',
         `Tenant with subdomain '${createTenantDto.subdomain}' already exists`,
+        'This subdomain is already taken. Please choose a different subdomain for your organization.'
       );
     }
 
@@ -75,7 +76,10 @@ export class TenantService {
     const tenant = await this.tenantRepository.findByIdWithConfig(id);
 
     if (!tenant) {
-      throw new NotFoundException(`Tenant with ID '${id}' not found`);
+      throw new NotFoundException(
+        `Tenant with ID '${id}' not found`,
+        'We couldn\'t find the organization you\'re looking for. Please check the ID and try again.'
+      );
     }
 
     return TenantResponseDto.fromPrisma(tenant);
@@ -90,6 +94,7 @@ export class TenantService {
     if (!tenant) {
       throw new NotFoundException(
         `Tenant with subdomain '${subdomain}' not found`,
+        'We couldn\'t find an organization with this subdomain. Please check the subdomain and try again.'
       );
     }
 
@@ -106,7 +111,10 @@ export class TenantService {
     // Check if tenant exists
     const existing = await this.tenantRepository.findByIdWithConfig(id);
     if (!existing) {
-      throw new NotFoundException(`Tenant with ID '${id}' not found`);
+      throw new NotFoundException(
+        `Tenant with ID '${id}' not found`,
+        'We couldn\'t find the organization you\'re trying to update. Please check the ID and try again.'
+      );
     }
 
     // Validate subdomain uniqueness (if changing)
@@ -119,7 +127,9 @@ export class TenantService {
       );
       if (existingBySubdomain) {
         throw new ConflictException(
+          'subdomain',
           `Tenant with subdomain '${updateTenantDto.subdomain}' already exists`,
+          'This subdomain is already taken. Please choose a different subdomain for your organization.'
         );
       }
     }
@@ -194,7 +204,10 @@ export class TenantService {
     // Check if tenant exists
     const existing = await this.tenantRepository.findById(id);
     if (!existing) {
-      throw new NotFoundException(`Tenant with ID '${id}' not found`);
+      throw new NotFoundException(
+        `Tenant with ID '${id}' not found`,
+        'We couldn\'t find the organization you\'re trying to archive. Please check the ID and try again.'
+      );
     }
 
     const tenant = await this.tenantRepository.delete(id);
@@ -212,14 +225,18 @@ export class TenantService {
       // For SHARED, dbSchema is required
       if (!dto.dbSchema) {
         throw new BadRequestException(
-          'dbSchema is required for SHARED database type',
+          'dbSchema',
+          'dbSchema is required when database type is SHARED',
+          'A database schema is required for shared database configuration. Please provide a schema name.'
         );
       }
     } else if (dto.dbType === 'DEDICATED') {
       // For DEDICATED, full database connection details are required
       if (!dto.dbHost || !dto.dbName || !dto.dbUsername || !dto.dbPassword) {
         throw new BadRequestException(
+          'dbHost',
           'dbHost, dbName, dbUsername, and dbPassword are required for DEDICATED database type',
+          'Complete database connection details are required for dedicated database configuration. Please provide host, name, username, and password.'
         );
       }
     }

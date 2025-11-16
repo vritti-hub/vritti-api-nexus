@@ -1,9 +1,5 @@
-import {
-  ConflictException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@vritti/api-sdk';
 import { User } from '@prisma/client';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -31,7 +27,9 @@ export class UserService {
     );
     if (existingUser) {
       throw new ConflictException(
+        'email',
         `User with email '${createUserDto.email}' already exists`,
+        'An account with this email address already exists. Please use a different email or log in to your existing account.'
       );
     }
 
@@ -61,7 +59,10 @@ export class UserService {
     const user = await this.userRepository.findById(id);
 
     if (!user) {
-      throw new NotFoundException(`User with ID '${id}' not found`);
+      throw new NotFoundException(
+        `User with ID '${id}' not found`,
+        'We couldn\'t find the user you\'re looking for. Please check the user ID and try again.'
+      );
     }
 
     return UserResponseDto.fromPrisma(user);
@@ -91,7 +92,10 @@ export class UserService {
     // Check if user exists
     const existing = await this.userRepository.findById(id);
     if (!existing) {
-      throw new NotFoundException(`User with ID '${id}' not found`);
+      throw new NotFoundException(
+        `User with ID '${id}' not found`,
+        'We couldn\'t find the user you\'re trying to update. Please check the user ID and try again.'
+      );
     }
 
     // Update user
@@ -147,7 +151,10 @@ export class UserService {
     // Check if user exists
     const existing = await this.userRepository.findById(id);
     if (!existing) {
-      throw new NotFoundException(`User with ID '${id}' not found`);
+      throw new NotFoundException(
+        `User with ID '${id}' not found`,
+        'We couldn\'t find the user you\'re trying to deactivate. Please check the user ID and try again.'
+      );
     }
 
     const user = await this.userRepository.delete(id);

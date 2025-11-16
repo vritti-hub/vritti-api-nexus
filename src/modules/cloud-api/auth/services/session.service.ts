@@ -1,4 +1,5 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { UnauthorizedException } from '@vritti/api-sdk';
 import { Session } from '@prisma/client';
 import { SessionRepository } from '../repositories/session.repository';
 import { JwtAuthService } from './jwt.service';
@@ -68,7 +69,10 @@ export class SessionService {
     });
 
     if (!session || !session.isActive) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException(
+        'Invalid or expired refresh token',
+        'Your session has expired. Please log in again.'
+      );
     }
 
     // Check if refresh token is expired
@@ -76,6 +80,7 @@ export class SessionService {
       await this.sessionRepository.update(session.id, { isActive: false });
       throw new UnauthorizedException(
         'Refresh token expired. Please login again',
+        'Your session has expired. Please log in again.'
       );
     }
 
@@ -137,12 +142,18 @@ export class SessionService {
     });
 
     if (!session || !session.isActive) {
-      throw new UnauthorizedException('Invalid or expired access token');
+      throw new UnauthorizedException(
+        'Invalid or expired access token',
+        'Your session is invalid or has expired. Please log in again.'
+      );
     }
 
     // Check if access token is expired
     if (new Date() > session.accessTokenExpiresAt) {
-      throw new UnauthorizedException('Access token expired. Please refresh');
+      throw new UnauthorizedException(
+        'Access token expired. Please refresh',
+        'Your session has expired. Please refresh your access token.'
+      );
     }
 
     return session;

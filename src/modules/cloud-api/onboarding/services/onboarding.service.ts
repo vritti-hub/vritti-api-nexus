@@ -1,12 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { User } from '@prisma/client';
+import {
+  BadRequestException
+} from '@vritti/api-sdk';
 import { getTokenExpiry, TokenType } from '../../../../config/jwt.config';
 import { EncryptionService } from '../../../../services';
 import { UserService } from '../../user/user.service';
@@ -38,7 +36,11 @@ export class OnboardingService {
 
     // Case 1: Onboarding complete → error
     if (existingUser?.onboardingComplete) {
-      throw new BadRequestException('User Already Exists. Please login.');
+      throw new BadRequestException(
+        'email',
+        'User Already Exists. Please login.',
+        'Your account has already been set up. Please proceed to login.'
+      );
     }
 
     // Case 2: Resume onboarding
@@ -66,7 +68,13 @@ export class OnboardingService {
         user.passwordHash,
       );
       if (!isPasswordValid) {
-        throw new UnauthorizedException('Invalid password');
+        throw new BadRequestException(
+          [
+            { field: 'password', message: 'Invalid password' },
+            { message: 'A password is already set for this account' }
+          ],
+          'The password you entered is incorrect. This account already has a password set. Please enter the correct password to continue.'
+        );
       }
     }
 
@@ -175,20 +183,27 @@ export class OnboardingService {
     const user = await this.userService.findById(userId);
 
     if (!user) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(
+        'User not found',
+        'We couldn\'t find your account. Please check your information or register.'
+      );
     }
 
     // Verify user is on SET_PASSWORD step
     if (user.onboardingStep !== 'SET_PASSWORD') {
       throw new BadRequestException(
         'User is not on SET_PASSWORD onboarding step',
+        'You cannot set a password at this stage. Please complete the previous onboarding steps first.'
       );
     }
 
     // Verify user doesn't already have a password
     const fullUser = await this.userService.findByEmail(user.email);
     if (fullUser?.passwordHash) {
-      throw new BadRequestException('User already has a password');
+      throw new BadRequestException(
+        'User already has a password',
+        'Your account already has a password set. Please use the forgot password feature if you need to change it.'
+      );
     }
 
     // Hash password
