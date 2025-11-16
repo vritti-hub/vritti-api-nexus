@@ -4,12 +4,15 @@ import { ConfigService } from '@nestjs/config';
 import { ServicesModule } from '../../../services';
 import { OnboardingController } from './controllers/onboarding.controller';
 import { OAuthController } from './controllers/oauth.controller';
+import { WhatsAppWebhookController } from './controllers/whatsapp-webhook.controller';
 import { OnboardingService } from './services/onboarding.service';
 import { EmailVerificationService } from './services/email-verification.service';
+import { MobileVerificationService } from './services/mobile-verification.service';
 import { OtpService } from './services/otp.service';
 import { OAuthService } from './services/oauth.service';
 import { OAuthStateService } from './services/oauth-state.service';
 import { EmailVerificationRepository } from './repositories/email-verification.repository';
+import { MobileVerificationRepository } from './repositories/mobile-verification.repository';
 import { OAuthProviderRepository } from './repositories/oauth-provider.repository';
 import { OAuthStateRepository } from './repositories/oauth-state.repository';
 import { GoogleOAuthProvider } from './providers/google-oauth.provider';
@@ -29,11 +32,16 @@ import { jwtConfigFactory } from '../../../config/jwt.config';
     ServicesModule,
     UserModule, // Import UserModule to use UserService
   ],
-  controllers: [OnboardingController, OAuthController],
+  controllers: [
+    OnboardingController,
+    OAuthController,
+    WhatsAppWebhookController,
+  ],
   providers: [
     // Core services
     OnboardingService,
     EmailVerificationService,
+    MobileVerificationService,
     OtpService,
 
     // OAuth services
@@ -42,6 +50,7 @@ import { jwtConfigFactory } from '../../../config/jwt.config';
 
     // Repositories
     EmailVerificationRepository,
+    MobileVerificationRepository,
     OAuthProviderRepository,
     OAuthStateRepository,
 
@@ -52,6 +61,11 @@ import { jwtConfigFactory } from '../../../config/jwt.config';
     FacebookOAuthProvider,
     TwitterOAuthProvider,
   ],
-  exports: [OnboardingService, EmailVerificationService, OAuthService],
+  exports: [
+    OnboardingService,
+    EmailVerificationService,
+    MobileVerificationService,
+    OAuthService,
+  ],
 })
 export class OnboardingModule {}

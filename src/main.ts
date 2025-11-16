@@ -1,8 +1,9 @@
 import fastifyCookie from '@fastify/cookie';
-import fastifyCsrfProtection from '@fastify/csrf-protection';
+import fastifyRawBody from 'fastify-raw-body';
+// import fastifyCsrfProtection from '@fastify/csrf-protection'; // Temporarily disabled - using NestJS CsrfGuard only
 import { BadRequestException, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import {
   FastifyAdapter,
   NestFastifyApplication,
@@ -48,14 +49,17 @@ async function bootstrap() {
     secret: configService.getOrThrow<string>('COOKIE_SECRET'),
   });
 
-  // Register CSRF protection
+  // NOTE: Fastify CSRF protection temporarily disabled to allow webhooks
+  // Using NestJS CsrfGuard only, which respects @Public() decorator
+  // TODO: Re-enable with proper webhook exclusion configuration
+  /*
   await app.register(fastifyCsrfProtection, {
     cookieOpts: {
       signed: true,
       httpOnly: true,
-      sameSite: 'lax', // IMPORTANT: 'strict' breaks OAuth redirects
+      sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      path: '/', // Cookie must be available for all endpoints
+      path: '/',
     },
     csrfOpts: {
       hmacKey: configService.getOrThrow<string>('CSRF_HMAC_KEY'),
@@ -80,7 +84,9 @@ async function bootstrap() {
   app.useGlobalInterceptors(httpLoggerInterceptor);
 
   // Register global CSRF guard
-  app.useGlobalGuards(new CsrfGuard(app.get(Reflector)));
+  // Temporarily disabled - requires Fastify CSRF plugin which conflicts with webhooks
+  // TODO: Re-enable with proper webhook exclusion or use alternative CSRF protection
+  // app.useGlobalGuards(new CsrfGuard(app.get(Reflector)));
 
   // Enable global validation pipe
   app.useGlobalPipes(

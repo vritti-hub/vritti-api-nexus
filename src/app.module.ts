@@ -7,7 +7,7 @@ import { RouterModule } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { validate } from './config/env.validation';
-import { CsrfController } from './csrf.controller';
+// import { CsrfController } from './csrf.controller'; // Temporarily disabled - depends on Fastify CSRF plugin
 
 import {
   AuthConfigModule,
@@ -101,7 +101,7 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
       },
     ]),
   ],
-  controllers: [AppController, CsrfController],
+  controllers: [AppController], // CsrfController temporarily removed
   providers: [AppService],
 })
 export class AppModule {}
