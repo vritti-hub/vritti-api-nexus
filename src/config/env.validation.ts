@@ -115,6 +115,27 @@ class EnvironmentVariables {
 
   @IsString()
   SENDER_NAME: string;
+
+  // WhatsApp Cloud API Configuration
+  @IsString()
+  @IsOptional()
+  WHATSAPP_PHONE_NUMBER_ID: string;
+
+  @IsString()
+  @IsOptional()
+  WHATSAPP_ACCESS_TOKEN: string;
+
+  @IsString()
+  @IsOptional()
+  WHATSAPP_APP_SECRET: string;
+
+  @IsString()
+  @IsOptional()
+  WHATSAPP_VERIFY_TOKEN: string;
+
+  @IsString()
+  @IsOptional()
+  WHATSAPP_API_VERSION: string = 'v18.0';
 }
 
 /**

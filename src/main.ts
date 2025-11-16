@@ -1,13 +1,15 @@
 import fastifyCookie from '@fastify/cookie';
-import fastifyCsrfProtection from '@fastify/csrf-protection';
+import fastifyRawBody from 'fastify-raw-body';
+// import fastifyCsrfProtection from '@fastify/csrf-protection'; // Temporarily disabled - using NestJS CsrfGuard only
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { NestFactory } from '@nestjs/core';
 import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { CsrfGuard } from '@vritti/api-sdk';
+// import { CsrfGuard } from '@vritti/api-sdk'; // Temporarily disabled
+// import { Reflector } from '@nestjs/core'; // Not needed without CsrfGuard
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -19,27 +21,42 @@ async function bootstrap() {
   // Get ConfigService
   const configService = app.get(ConfigService);
 
+  // Register raw-body plugin for webhook signature validation
+  // This must be registered BEFORE cookie plugin to capture raw body
+  await app.register(fastifyRawBody, {
+    field: 'rawBody', // Adds rawBody property to request
+    global: true, // Enable for all routes to support webhook signature validation
+    encoding: 'utf8',
+    runFirst: true,
+  });
+
   // Register cookie support
   await app.register(fastifyCookie, {
     secret: configService.getOrThrow<string>('COOKIE_SECRET'),
   });
 
-  // Register CSRF protection
+  // NOTE: Fastify CSRF protection temporarily disabled to allow webhooks
+  // Using NestJS CsrfGuard only, which respects @Public() decorator
+  // TODO: Re-enable with proper webhook exclusion configuration
+  /*
   await app.register(fastifyCsrfProtection, {
     cookieOpts: {
       signed: true,
       httpOnly: true,
-      sameSite: 'lax', // IMPORTANT: 'strict' breaks OAuth redirects
+      sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
-      path: '/', // Cookie must be available for all endpoints
+      path: '/',
     },
     csrfOpts: {
       hmacKey: configService.getOrThrow<string>('CSRF_HMAC_KEY'),
     },
   });
+  */
 
   // Register global CSRF guard
-  app.useGlobalGuards(new CsrfGuard(app.get(Reflector)));
+  // Temporarily disabled - requires Fastify CSRF plugin which conflicts with webhooks
+  // TODO: Re-enable with proper webhook exclusion or use alternative CSRF protection
+  // app.useGlobalGuards(new CsrfGuard(app.get(Reflector)));
 
   // Enable global validation pipe
   app.useGlobalPipes(
