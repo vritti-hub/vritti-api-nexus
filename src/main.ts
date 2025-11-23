@@ -7,17 +7,41 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
-import { CsrfGuard, HttpExceptionFilter } from '@vritti/api-sdk';
+import {
+  CorrelationIdMiddleware,
+  CsrfGuard,
+  HttpExceptionFilter,
+  HttpLoggerInterceptor,
+  LoggerService,
+} from '@vritti/api-sdk';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // When using default provider, let NestJS use its built-in logger to avoid circular reference
+  // When using Winston, we need to use LoggerService
+  const logProvider = process.env.LOG_PROVIDER || 'winston';
+  const useBuiltInLogger = logProvider === 'default';
+
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter(),
+    // Only pass custom logger for Winston to avoid circular reference with default provider
+    useBuiltInLogger ? {} : {
+      logger: new LoggerService({
+        environment: process.env.NODE_ENV 
+      })
+    },
   );
 
-  // Get ConfigService
+  // Get services from DI container
   const configService = app.get(ConfigService);
+
+  // Only replace logger when using Winston provider
+  // Default provider would create circular reference if we call app.useLogger()
+  if (!useBuiltInLogger) {
+    const appLogger = app.get(LoggerService);
+    app.useLogger(appLogger);
+  }
 
   // Register cookie support
   await app.register(fastifyCookie, {
@@ -42,6 +66,18 @@ async function bootstrap() {
   // This filter transforms all exceptions (custom, NestJS built-in, DTO validation)
   // into a consistent format with errors array: { errors: [{ field?, message }] }
   app.useGlobalFilters(new HttpExceptionFilter());
+
+  // Register correlation ID middleware for request tracking using Fastify hooks
+  // Using addHook ensures AsyncLocalStorage context persists throughout request lifecycle
+  const correlationMiddleware = app.get(CorrelationIdMiddleware);
+  const fastifyInstance = app.getHttpAdapter().getInstance();
+  fastifyInstance.addHook('onRequest', async (request, reply) => {
+    await correlationMiddleware.onRequest(request as any, reply as any);
+  });
+
+  // Register HTTP logger interceptor for request/response logging
+  const httpLoggerInterceptor = app.get(HttpLoggerInterceptor);
+  app.useGlobalInterceptors(httpLoggerInterceptor);
 
   // Register global CSRF guard
   app.useGlobalGuards(new CsrfGuard(app.get(Reflector)));
@@ -77,6 +113,9 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port, '0.0.0.0');
-  console.log(`API Nexus running on http://localhost:${port}`);
+
+  // Get logger from DI container for final bootstrap message
+  const logger = app.get(LoggerService);
+  logger.log(`API Nexus running on http://localhost:${port}`, 'Bootstrap');
 }
 bootstrap();

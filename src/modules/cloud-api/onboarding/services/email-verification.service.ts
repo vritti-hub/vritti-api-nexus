@@ -25,7 +25,8 @@ export class EmailVerificationService {
   async sendVerificationOtp(userId: string, email: string): Promise<void> {
     // Generate OTP
     const otp = this.otpService.generateOtp();
-    this.logger.log(`Generated OTP ${otp} for user ${userId}`);
+    // Security: Never log OTP values in production - GDPR/PCI compliance
+    this.logger.log(`Generated OTP for user ${userId}`);
     const hashedOtp = await this.otpService.hashOtp(otp);
     const expiresAt = this.otpService.getOtpExpiryTime();
 

@@ -39,8 +39,9 @@ export class SmsService {
       //   to: phoneNumber,
       // });
 
+      // Security: Never log OTP values in production - GDPR/PCI compliance
       this.logger.warn(
-        `[MOCK] SMS would be sent to ${phoneNumber}: ${message}`,
+        `[MOCK] SMS verification would be sent to ${phoneNumber}`,
       );
     } catch (error) {
       this.logger.error(`Failed to send SMS to ${phoneNumber}:`, error);
@@ -74,8 +75,9 @@ export class SmsService {
       //   to: `whatsapp:${phoneNumber}`,
       // });
 
+      // Security: Never log OTP values in production - GDPR/PCI compliance
       this.logger.warn(
-        `[MOCK] WhatsApp message would be sent to ${phoneNumber}: ${message}`,
+        `[MOCK] WhatsApp verification would be sent to ${phoneNumber}`,
       );
     } catch (error) {
       this.logger.error(

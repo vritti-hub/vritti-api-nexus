@@ -13,6 +13,7 @@ import {
   AuthConfigModule,
   DatabaseModule,
   DatabaseModuleOptions,
+  LoggerModule,
 } from '@vritti/api-sdk';
 import { CloudApiModule } from './modules/cloud-api/cloud-api.module';
 import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
@@ -23,6 +24,38 @@ import { TenantModule } from './modules/cloud-api/tenant/tenant.module';
       isGlobal: true,
       envFilePath: '.env',
       validate,
+    }),
+    // Logger module configuration with environment presets
+    // Presets available: 'development', 'staging', 'production', 'test'
+    // All preset values can be overridden with explicit options
+    LoggerModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        return {
+          // Explicit environment selection (required for preset system)
+          environment: configService.get('NODE_ENV', 'development'),
+
+          // Application metadata
+          appName: configService.get('APP_NAME', 'vritti-api-nexus'),
+
+          // Optional overrides (if not set, preset values are used)
+          provider: configService.get('LOG_PROVIDER'),
+          level: configService.get('LOG_LEVEL'),
+          format: configService.get('LOG_FORMAT'),
+          enableFileLogger: configService.get('LOG_TO_FILE'),
+          filePath: configService.get('LOG_FILE_PATH'),
+          maxFiles: configService.get('LOG_MAX_FILES'),
+
+          // HTTP logging configuration (optional)
+          enableHttpLogger: true,
+          httpLogger: {
+            enableRequestLog: true,
+            enableResponseLog: true,
+            slowRequestThreshold: 3000, // milliseconds
+          },
+        };
+      },
+      inject: [ConfigService],
     }),
     // Multi-tenant database module (Gateway Mode)
     // forServer() automatically registers TenantContextInterceptor and imports RequestModule

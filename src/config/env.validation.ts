@@ -1,4 +1,4 @@
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance, Transform } from 'class-transformer';
 import {
   IsEnum,
   IsNumber,
@@ -8,6 +8,7 @@ import {
   Min,
   Max,
   IsEmail,
+  IsBoolean,
 } from 'class-validator';
 
 enum Environment {
@@ -115,6 +116,29 @@ class EnvironmentVariables {
 
   @IsString()
   SENDER_NAME: string;
+
+  // Logger Configuration
+  @IsEnum(['default', 'winston'])
+  @IsOptional()
+  LOG_PROVIDER: string = 'default';
+
+  @IsBoolean()
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  LOG_TO_FILE: boolean = false;
+
+  @IsString()
+  @IsOptional()
+  LOG_FILE_PATH: string = './logs';
+
+  @IsString()
+  @IsOptional()
+  LOG_MAX_FILES: string = '14d';
+
+  @IsBoolean()
+  @IsOptional()
+  @Transform(({ value }) => value === 'true')
+  MASK_PII: boolean = false;
 }
 
 /**

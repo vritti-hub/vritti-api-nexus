@@ -31,6 +31,57 @@
 $ yarn install
 ```
 
+## Environment Variables
+
+The application uses environment variables for configuration. Create a `.env` file in the root directory based on the following configuration:
+
+### Logging Configuration
+
+The application supports both default NestJS logging and advanced Winston-based logging with file rotation and PII masking.
+
+- **LOG_PROVIDER** (default: `default`)
+  - Choose logging implementation: `default` or `winston`
+  - `default`: Uses NestJS built-in logger (console only)
+  - `winston`: Uses Winston with advanced features (file rotation, structured logging)
+
+- **LOG_TO_FILE** (default: `false`)
+  - Enable file-based logging: `true` or `false`
+  - Only applicable when `LOG_PROVIDER=winston`
+  - When enabled, logs are written to the `logs/` directory with daily rotation
+
+- **LOG_FILE_PATH** (default: `./logs`)
+  - Directory path for log files
+  - Only used when `LOG_TO_FILE=true`
+
+- **LOG_MAX_FILES** (default: `14d`)
+  - Log retention period
+  - Format: `{number}d` for days (e.g., `14d`, `30d`, `90d`)
+  - Old log files are automatically deleted after this period
+
+- **MASK_PII** (default: `false`)
+  - Enable PII (Personally Identifiable Information) masking: `true` or `false`
+  - When enabled, sensitive data is automatically masked in logs:
+    - Email addresses: `user@example.com` → `u***@example.com`
+    - Phone numbers: `+1234567890` → `+12****7890`
+    - Credit cards: `4111111111111111` → `4111****1111`
+    - Sensitive headers: Authorization, Cookie, etc.
+
+**Note:** `LOG_LEVEL` and `LOG_FORMAT` are automatically detected from `NODE_ENV`:
+- Development: `debug` level, `pretty` format (colorized, human-readable)
+- Production: `info` level, `json` format (structured JSON for log aggregation)
+- Test: `error` level, `simple` format (minimal output)
+
+### Example Configuration
+
+```env
+# Logging Configuration
+LOG_PROVIDER=winston
+LOG_TO_FILE=false
+LOG_FILE_PATH=./logs
+LOG_MAX_FILES=14d
+MASK_PII=false
+```
+
 ## Compile and run the project
 
 ```bash
